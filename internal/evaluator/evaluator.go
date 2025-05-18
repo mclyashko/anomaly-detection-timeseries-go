@@ -42,6 +42,28 @@ var functions = map[string]govaluate.ExpressionFunction{
 		}
 		return args[2], nil
 	},
+	"or": func(args ...any) (any, error) {
+		first, ok := args[0].(bool)
+		if !ok {
+			return nil, fmt.Errorf("first argument of if must be boolean")
+		}
+		second, ok := args[0].(bool)
+		if !ok {
+			return nil, fmt.Errorf("second argument of if must be boolean")
+		}
+		return first || second, nil
+	},
+	"and": func(args ...any) (any, error) {
+		first, ok := args[0].(bool)
+		if !ok {
+			return nil, fmt.Errorf("first argument of if must be boolean")
+		}
+		second, ok := args[0].(bool)
+		if !ok {
+			return nil, fmt.Errorf("second argument of if must be boolean")
+		}
+		return first && second, nil
+	},
 	"hour": func(args ...any) (any, error) {
 		return float64(time.Unix(int64(args[0].(float64)), 0).Hour()), nil
 	},
