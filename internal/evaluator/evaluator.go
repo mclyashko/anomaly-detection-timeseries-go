@@ -11,7 +11,7 @@ import (
 
 type ExpressionEvaluator interface {
 	EvaluateMetric(t time.Time) (float64, error)
-	EvaluateRule(value float64) (bool, error)
+	EvaluateRule(value float64, t time.Time) (bool, error)
 }
 
 type expressionEvaluator struct {
@@ -43,26 +43,34 @@ var functions = map[string]govaluate.ExpressionFunction{
 		return args[2], nil
 	},
 	"or": func(args ...any) (any, error) {
-		first, ok := args[0].(bool)
-		if !ok {
-			return nil, fmt.Errorf("first argument of if must be boolean")
+		if len(args) == 0 {
+			return false, nil
 		}
-		second, ok := args[0].(bool)
-		if !ok {
-			return nil, fmt.Errorf("second argument of if must be boolean")
+		for i, arg := range args {
+			b, ok := arg.(bool)
+			if !ok {
+				return nil, fmt.Errorf("argument %d of or must be boolean", i)
+			}
+			if b {
+				return true, nil
+			}
 		}
-		return first || second, nil
+		return false, nil
 	},
 	"and": func(args ...any) (any, error) {
-		first, ok := args[0].(bool)
-		if !ok {
-			return nil, fmt.Errorf("first argument of if must be boolean")
+		if len(args) == 0 {
+			return true, nil
 		}
-		second, ok := args[0].(bool)
-		if !ok {
-			return nil, fmt.Errorf("second argument of if must be boolean")
+		for i, arg := range args {
+			b, ok := arg.(bool)
+			if !ok {
+				return nil, fmt.Errorf("argument %d of and must be boolean", i)
+			}
+			if !b {
+				return false, nil
+			}
 		}
-		return first && second, nil
+		return true, nil
 	},
 	"hour": func(args ...any) (any, error) {
 		return float64(time.Unix(int64(args[0].(float64)), 0).Hour()), nil
@@ -123,9 +131,10 @@ func (e *expressionEvaluator) EvaluateMetric(t time.Time) (float64, error) {
 	return val, nil
 }
 
-func (e *expressionEvaluator) EvaluateRule(value float64) (bool, error) {
+func (e *expressionEvaluator) EvaluateRule(value float64, t time.Time) (bool, error) {
 	parameters := map[string]interface{}{
 		"value": value,
+		"t":     float64(t.Unix()),
 	}
 	result, err := e.rulesExpr.Evaluate(parameters)
 	if err != nil {

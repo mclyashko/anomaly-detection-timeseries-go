@@ -51,7 +51,7 @@ func (g *timeSeriesGenerator) Generate() error {
 			return fmt.Errorf("ошибка вычисления метрики: %w", err)
 		}
 
-		isAnomaly, err := g.evaluator.EvaluateRule(value)
+		isAnomaly, err := g.evaluator.EvaluateRule(value, ts)
 		if err != nil {
 			return fmt.Errorf("ошибка проверки правила аномалии: %w", err)
 		}
